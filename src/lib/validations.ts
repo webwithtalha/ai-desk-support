@@ -16,6 +16,10 @@ export const registerSchema = z.object({
     .string()
     .min(1, "Name is required")
     .min(2, "Name must be at least 2 characters"),
+  orgName: z
+    .string()
+    .min(1, "Organization name is required")
+    .min(2, "Organization name must be at least 2 characters"),
   email: z
     .string()
     .min(1, "Email is required")
@@ -28,6 +32,10 @@ export const registerSchema = z.object({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       "Password must contain at least one uppercase letter, one lowercase letter, and one number"
     ),
+})
+
+// Frontend form schema with password confirmation
+export const registerFormSchema = registerSchema.extend({
   confirmPassword: z
     .string()
     .min(1, "Please confirm your password"),
@@ -37,4 +45,4 @@ export const registerSchema = z.object({
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
-export type RegisterFormData = z.infer<typeof registerSchema>
+export type RegisterFormData = z.infer<typeof registerFormSchema>

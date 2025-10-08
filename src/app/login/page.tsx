@@ -3,13 +3,28 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import Link from "next/link"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { loginSchema, type LoginFormData } from "@/lib/validations"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function LoginPage() {
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+  const { login, user, isLoading: authLoading } = useAuth()
+  const router = useRouter()
+
+  // Redirect to home if user is already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/')
+    }
+  }, [user, authLoading, router])
+  
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -19,14 +34,38 @@ export default function LoginPage() {
   })
 
   const onSubmit = async (data: LoginFormData) => {
+    setIsLoading(true)
+    setError("")
+    
     try {
-      console.log("Login data:", data)
-      // TODO: Implement actual login logic here
-      // Example: await signIn(data.email, data.password)
+      const result = await login(data.email, data.password)
+      
+      if (!result.success) {
+        setError(result.error || "Login failed")
+      }
     } catch (error) {
       console.error("Login error:", error)
-      // TODO: Handle login errors
+      setError("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Don't render the form if user is logged in (will redirect)
+  if (user) {
+    return null
   }
 
   return (
@@ -41,6 +80,11 @@ export default function LoginPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <CardContent className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                  {error}
+                </div>
+              )}
               <FormField
                 control={form.control}
                 name="email"
@@ -77,8 +121,8 @@ export default function LoginPage() {
               />
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full">
-                Sign in
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Signing in..." : "Sign in"}
               </Button>
               <div className="text-center text-sm">
                 Don't have an account?{" "}
