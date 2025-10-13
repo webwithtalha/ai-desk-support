@@ -1,18 +1,63 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Desk Support - Multi-Tenant SaaS
+
+A **true multi-tenant SaaS application** built with Next.js, featuring subdomain-based organization isolation and role-based access control.
+
+## 🌟 Key Features
+
+- **🏢 Multi-Tenant Architecture**: Each organization gets its own subdomain (e.g., `acme.yourapp.com`)
+- **🔒 Complete Data Isolation**: Organizations can only access their own data
+- **👥 Role-Based Access Control**: OWNER, ADMIN, and AGENT roles with hierarchical permissions
+- **🔐 Secure Authentication**: JWT-based auth with HTTP-only cookies
+- **🎯 Subdomain Routing**: Automatic org detection from subdomain
+- **⚡ Modern Stack**: Next.js 15, TypeScript, MongoDB, Tailwind CSS
+
+## 📚 Multi-Tenant Documentation
+
+**👉 See [MULTI_TENANT_GUIDE.md](./MULTI_TENANT_GUIDE.md) for complete architecture and implementation details.**
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+
+- MongoDB instance
+- pnpm (recommended) or npm
+
+### Installation
+
+1. **Clone and install dependencies:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
+
+2. **Set up environment variables:**
+```bash
+# Create .env.local file
+JWT_SECRET=your-secret-key-here
+MONGODB_URI=mongodb://localhost:27017/ai-desk-support
+```
+
+3. **Run the development server:**
+```bash
+pnpm dev
+```
+
+### Testing Multi-Tenant Features
+
+1. **Register an organization:**
+   - Go to `http://localhost:3000/register`
+   - Create an organization (e.g., "Acme Corp")
+   - You'll be redirected to `http://acme-corp.localhost:3000`
+
+2. **Access via subdomain:**
+   - Use `orgslug.localhost:3000` format
+   - Each organization has isolated data
+   - Users can only access their org's subdomain
+
+3. **Test different roles:**
+   - OWNER: Full access (created during registration)
+   - ADMIN: Can manage resources (use `/api/users` to invite)
+   - AGENT: Limited access
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
