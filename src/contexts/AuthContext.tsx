@@ -9,7 +9,7 @@ interface User {
   email: string;
   role: string;
   orgId: string | Record<string, any>; // Can be string or populated object
-  orgName: string;
+  orgSlug?: string;
 }
 
 interface AuthContextType {
@@ -21,6 +21,31 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper function to build subdomain URL
+function getSubdomainUrl(orgSlug: string): string {
+  if (typeof window === 'undefined') return '/';
+  
+  const { protocol, hostname, port } = window.location;
+  
+  // Check if we're already on the correct subdomain
+  const currentSubdomain = hostname.split('.')[0];
+  if (currentSubdomain === orgSlug) {
+    // Already on correct subdomain, just go to home
+    return '/';
+  }
+  
+  // In development, use subdomain.localhost
+  if (hostname === 'localhost' || hostname.startsWith('127.0.0.1') || hostname.endsWith('.localhost')) {
+    // For development: orgSlug.localhost:3000
+    const portStr = port ? `:${port}` : '';
+    return `${protocol}//${orgSlug}.localhost${portStr}/`;
+  }
+  
+  // In production: orgSlug.yourdomain.com
+  const baseDomain = hostname.split('.').slice(-2).join('.'); // Get base domain (e.g., yourdomain.com)
+  return `${protocol}//${orgSlug}.${baseDomain}/`;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -67,9 +92,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         setUser(data.user);
-        // Use router.replace to avoid back button issues and refresh to ensure state is updated
-        router.replace('/');
-        router.refresh();
+        
+        // Redirect to organization's subdomain if provided
+        if (data.redirectTo) {
+          const subdomainUrl = getSubdomainUrl(data.redirectTo);
+          
+          // Only do full page redirect if we need to change subdomain
+          if (subdomainUrl !== '/') {
+            window.location.href = subdomainUrl;
+          } else {
+            // Already on correct subdomain, just navigate
+            router.replace('/');
+            router.refresh();
+          }
+        } else {
+          // Fallback to regular navigation
+          router.replace('/');
+          router.refresh();
+        }
+        
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Login failed' };
@@ -95,9 +136,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (response.ok) {
         setUser(data.user);
-        // Use router.replace to avoid back button issues and refresh to ensure state is updated
-        router.replace('/');
-        router.refresh();
+        
+        // Redirect to organization's subdomain if provided
+        if (data.redirectTo) {
+          const subdomainUrl = getSubdomainUrl(data.redirectTo);
+          
+          // Only do full page redirect if we need to change subdomain
+          if (subdomainUrl !== '/') {
+            window.location.href = subdomainUrl;
+          } else {
+            // Already on correct subdomain, just navigate
+            router.replace('/');
+            router.refresh();
+          }
+        } else {
+          // Fallback to regular navigation
+          router.replace('/');
+          router.refresh();
+        }
+        
         return { success: true };
       } else {
         return { success: false, error: data.error || 'Registration failed' };

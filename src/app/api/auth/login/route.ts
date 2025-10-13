@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { connectToDB } from '@/app/lib/db';
 import User from '@/models/User';
+import Org from '@/models/Org';
 import { loginSchema } from '@/lib/validations';
 
 // Force Node.js runtime (required for crypto module used by JWT)
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = validatedData;
     
     // Find user by email
-    const user = await User.findOne({ email }).populate('orgId');
+    const user = await User.findOne({ email });
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
@@ -35,6 +36,15 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+    // Fetch organization details
+    const org = await Org.findById(user.orgId);
+    
+    if (!org) {
+      return NextResponse.json(
+        { error: 'Organization not found' },
+        { status: 404 }
+      );
+    }
     
     // Generate JWT token
     const token = jwt.sign(
@@ -48,7 +58,7 @@ export async function POST(request: NextRequest) {
       { expiresIn: '1h' }
     );
     
-    // Return success response with token
+    // Return success response with token and org subdomain
     const response = NextResponse.json(
       {
         message: 'Login successful',
@@ -58,8 +68,11 @@ export async function POST(request: NextRequest) {
           email: user.email,
           role: user.role,
           orgId: user.orgId,
-          orgName: user.orgId?.name || 'Unknown Organization'
-        }
+          orgName: org.name,
+          orgSlug: org.slug
+        },
+        // Include org slug for client-side redirect to subdomain
+        redirectTo: org.slug
       },
       { status: 200 }
     );

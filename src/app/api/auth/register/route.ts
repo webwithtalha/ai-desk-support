@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       { expiresIn: '1h' }
     );
     
-    // Return success response with token
+    // Return success response with token and org subdomain
     const response = NextResponse.json(
       {
         message: 'User registered successfully',
@@ -83,8 +83,11 @@ export async function POST(request: NextRequest) {
           email: user.email,
           role: user.role,
           orgId: user.orgId,
-          orgName: defaultOrg.name
-        }
+          orgName: defaultOrg.name,
+          orgSlug: defaultOrg.slug
+        },
+        // Include org slug for client-side redirect to subdomain
+        redirectTo: defaultOrg.slug
       },
       { status: 201 }
     );
